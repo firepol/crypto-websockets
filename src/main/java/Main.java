@@ -1,54 +1,42 @@
-import info.bitrich.xchangestream.bitstamp.BitstampStreamingExchange;
-import info.bitrich.xchangestream.core.StreamingExchange;
-import info.bitrich.xchangestream.core.StreamingExchangeFactory;
-import io.reactivex.disposables.Disposable;
-import org.knowm.xchange.currency.CurrencyPair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import picocli.CommandLine;
+import picocli.CommandLine.Parameters;
 
-import java.util.concurrent.CountDownLatch;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.HashMap;
+import java.util.stream.Stream;
 
-public class Main {
+@CommandLine.Command(name = "cryptows", mixinStandardHelpOptions = true, version = "0.1 alpha")
+public class Main implements Runnable {
 
     private final static Logger LOG = LoggerFactory.getLogger(Main.class);
 
-    public static void main(String[] args) throws InterruptedException {
-        String className = BitstampStreamingExchange.class.getName();
-        StreamingExchange exchange = StreamingExchangeFactory.INSTANCE.createExchange(className);
-        // Connect to the Exchange WebSocket API. Blocking wait for the connection
-        exchange.connect().blockingAwait();
-        // Subscribe order book data with the reference to the subscription
-        CountDownLatch latch = new CountDownLatch(1);
+    @Parameters(arity = "1", paramLabel = "DIR", defaultValue = "./data",
+            description = "DIR containing pairs to subscribe to: filename = exchange name, content: base,quote e.g. BTC,USD")
+    private String pairsDir;
 
-        // TODO: Subscribe: do something more useful, like saving to a DB instead of just LOG.info
-
-        // For some exchanges (like bitfinex, binance) "USD" is "USDT", change accordingly
-        CurrencyPair pair = CurrencyPair.BTC_USD;
-
-        // Subscribe to order book
-        Disposable obSubscription = exchange.getStreamingMarketDataService()
-                .getOrderBook(pair)
-                .subscribe(orderBook -> {
-                    LOG.info(orderBook.toString());
+    public void run() {
+        HashMap<String, PairsCollection> exchangePairs = new HashMap<>();
+        try (Stream<Path> paths = Files.walk(Paths.get(pairsDir))) {
+            paths.filter(Files::isRegularFile)
+                .forEach(filePath-> {
+                    PairsCollection pairs = new PairsCollection(filePath.toString());
+                    String fileName = filePath.getFileName().toString();
+                    String exchangeName = fileName.split("\\.")[0];
+                    exchangePairs.put(exchangeName, pairs);
                 });
+            ExchangeManager.processWebsockets(exchangePairs);
+        } catch (IOException | InterruptedException e) {
+            e.printStackTrace();
+        }
 
-        // Subscribe to live trades
-        Disposable tradeSubscription = exchange.getStreamingMarketDataService()
-                .getTrades(pair)
-                .subscribe(trade -> {
-                    LOG.info(trade.toString());
-                });
+    }
 
-        latch.await();
-
-        // Unsubscribe from trades
-        tradeSubscription.dispose();
-
-        // Unsubscribe from order book
-        obSubscription.dispose();
-
-        // Disconnect from exchange (non-blocking)
-        exchange.disconnect()
-                .subscribe(() -> LOG.info("Disconnected from the " + "Exchange"));
+    public static void main(String[] args) {
+        CommandLine.run(new Main(), args);
     }
 }

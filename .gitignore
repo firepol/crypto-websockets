@@ -4,3 +4,6 @@
 
 # Compiled class file
 *.class
+
+# Data directory containing pairs to subscribe to
+data/

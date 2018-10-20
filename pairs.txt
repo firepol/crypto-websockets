@@ -1,0 +1,6 @@
+#binance,NEO,BTC
+#binance,EOS,BTC
+#binance,XRP,USD
+#bitfinex,NEO,BTC
+#bitstamp,XRP,USD
+bitfinex,IOT,USD
