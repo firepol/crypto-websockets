@@ -15,6 +15,7 @@ import org.knowm.xchange.dto.trade.LimitOrder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -65,26 +66,36 @@ public class ExchangeManager {
                     LOG.info(orderBook.toString());
                     for(int i=0; i<3; i++) {
                         LimitOrder ask = orderBook.getAsks().get(i);
+                        int sort = i + 1;
 
                         QueryBuilder<OrderBook, Integer> queryBuilder = orderBookDao.queryBuilder();
-                        queryBuilder.where().eq(OrderBook.EXCHANGE_ID_FIELD_NAME, exchangeName).and()
-                            .eq(OrderBook.SORT_FIELD_NAME, i + 1);
+                        queryBuilder.where().eq(OrderBook.EXCHANGE_ID_FIELD_NAME, exchangeName)
+                                .and()
+                                .eq(OrderBook.SORT_FIELD_NAME, sort)
+                                .and()
+                                .eq(OrderBook.SIDE_FIELD_NAME, "ask");
+
                         List<OrderBook> dbAsks = queryBuilder.query();
-
-                        OrderBook dbAsk;
-                        if (dbAsks.isEmpty()) {
-                            dbAsk = new OrderBook(exchangeName, pair.base.toString(), pair.counter.toString(), "ask",
-                                    ask.getLimitPrice(), ask.getOriginalAmount(), i + 1, orderBook.getTimeStamp());
-                        } else {
-                            dbAsk = dbAsks.get(0);
-                            dbAsk.price = ask.getLimitPrice();
-                            dbAsk.volume = ask.getOriginalAmount();
-                            dbAsk.modified = orderBook.getTimeStamp();
-                        }
-
-                        orderBookDao.createOrUpdate(dbAsk);
+                        // TODO: take pair from order!
+                        saveOrder(exchangeName, pair, "ask", orderBook.getTimeStamp(), sort, ask, dbAsks);
                     }
                 });
+    }
+
+    // TODO: pass null or the dbOrder, not a list...
+    private void saveOrder(String exchangeName, CurrencyPair pair, String side, Date timestamp, int sort,
+                           LimitOrder order, List<OrderBook> orders) throws java.sql.SQLException {
+        OrderBook dbOrder;
+        if (orders.isEmpty()) {
+            dbOrder = new OrderBook(exchangeName, pair.base.toString(), pair.counter.toString(), side,
+                    order.getLimitPrice(), order.getOriginalAmount(), sort, timestamp);
+        } else {
+            dbOrder = orders.get(0);
+            dbOrder.price = order.getLimitPrice();
+            dbOrder.volume = order.getOriginalAmount();
+            dbOrder.modified = timestamp;
+        }
+        orderBookDao.createOrUpdate(dbOrder);
     }
 
     public Disposable subscribeTrades(StreamingExchange exchange, CurrencyPair pair) {
