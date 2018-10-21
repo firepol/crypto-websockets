@@ -1,3 +1,4 @@
+import info.bitrich.xchangestream.core.ProductSubscription;
 import info.bitrich.xchangestream.core.StreamingExchange;
 import info.bitrich.xchangestream.core.StreamingExchangeFactory;
 import io.reactivex.disposables.Disposable;
@@ -12,21 +13,24 @@ import java.util.concurrent.CountDownLatch;
 public class ExchangeManager {
     private final static Logger LOG = LoggerFactory.getLogger(ExchangeManager.class);
 
-    public static void processWebsockets(HashMap<String, PairsCollection> pairsCollection) throws InterruptedException {
-
-        HashMap<String, StreamingExchange> streamingExchanges = new HashMap<>();
-        pairsCollection.forEach((key, value)->{
-            StreamingExchange exchange = getStreamingExchange(key);
-            exchange.connect().blockingAwait();
-            streamingExchanges.put(key, exchange);
-        });
+    public static void processWebsockets(HashMap<String, PairsCollection> pairsByExchange) throws InterruptedException {
 
         CountDownLatch latch = new CountDownLatch(1);
-
-        pairsCollection.forEach((key, value)->{
-            StreamingExchange exchange = streamingExchanges.get(key);
-            //value.pairs.forEach(pair->subscribeTrades(exchange, pair));
-            value.pairs.forEach(pair->subscribeOrderBook(exchange, pair));
+        pairsByExchange.forEach((exchangeName, pairsCollection)->{
+            if (exchangeName.equals("binance")) {
+                pairsCollection.pairs.forEach(pair->{
+                    StreamingExchange exchange = getStreamingExchange(exchangeName);
+                    ProductSubscription productSubscription = ProductSubscription.create()
+                        .addOrderbook(pair)
+                        .build();
+                    exchange.connect(productSubscription).blockingAwait();
+                    subscribeOrderBook(exchange, pair);
+                });
+            } else {
+                StreamingExchange exchange = getStreamingExchange(exchangeName);
+                exchange.connect().blockingAwait();
+                pairsCollection.pairs.forEach(pair->subscribeOrderBook(exchange, pair));
+            }
         });
 
         latch.await();
