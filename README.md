@@ -31,3 +31,8 @@ For the pair BTC/USD, BTC is the base, which is the cryptocurrency you are buyin
 ## Usage
 
 `cryptows` is a command line application and it expects as first parameter the folder containing the pairs, as explained above. If you omit it, `data` will be used by default.
+
+## Resources
+
+[ORMLite JDBC examples](http://ormlite.com/javadoc/ormlite-core/doc-files/ormlite_7.html#Examples)
+[Example ORMLite: SimpleMain](https://github.com/j256/ormlite-jdbc/blob/master/src/test/java/com/j256/ormlite/examples/simple/SimpleMain.java)

@@ -3,7 +3,6 @@ import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
 import picocli.CommandLine.Parameters;
 
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -21,6 +20,7 @@ public class Main implements Runnable {
 
     public void run() {
         HashMap<String, PairsCollection> exchangePairs = new HashMap<>();
+        ExchangeManager manager = new ExchangeManager();
         try (Stream<Path> paths = Files.walk(Paths.get(pairsDir))) {
             paths.filter(Files::isRegularFile)
                 .forEach(filePath-> {
@@ -29,8 +29,8 @@ public class Main implements Runnable {
                     String exchangeName = fileName.split("\\.")[0];
                     exchangePairs.put(exchangeName, pairs);
                 });
-            ExchangeManager.processWebsockets(exchangePairs);
-        } catch (IOException | InterruptedException e) {
+            manager.processWebsockets(exchangePairs);
+        } catch (Exception e) {
             e.printStackTrace();
         }
 

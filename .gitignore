@@ -7,3 +7,6 @@
 
 # Data directory containing pairs to subscribe to
 data/
+
+# SQLite DB
+*.db
