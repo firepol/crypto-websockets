@@ -5,8 +5,8 @@
 # Compiled class file
 *.class
 
-# Data directory containing pairs to subscribe to
-data/
+# Directory containing executable, db and settings
+bin/
 
-# SQLite DB
-*.db
+# Build directory
+target/

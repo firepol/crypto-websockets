@@ -1,3 +1,5 @@
+package com.github.firepol.cryptows;
+
 import com.j256.ormlite.field.DataType;
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.table.DatabaseTable;
@@ -26,14 +28,14 @@ public class OrderBook {
     @DatabaseField(columnName = EXCHANGE_ID_FIELD_NAME, canBeNull = false, width = 20)
     public String exchangeId;
 
+    @DatabaseField(columnName = SIDE_FIELD_NAME, canBeNull = false, width = 3)
+    public String side; // ask / bid
+
     @DatabaseField(columnName = BASE_FIELD_NAME, canBeNull = false, width = 10)
     public String base;
 
     @DatabaseField(columnName = QUOTE_FIELD_NAME, canBeNull = false, width = 10)
     public String quote;
-
-    @DatabaseField(columnName = SIDE_FIELD_NAME, canBeNull = false, width = 3)
-    public String side; // ask / bid
 
     @DatabaseField(columnName = PRICE_FIELD_NAME, dataType = DataType.BIG_DECIMAL, canBeNull = false)
     public BigDecimal price;
@@ -50,7 +52,8 @@ public class OrderBook {
     public OrderBook() {
         // ORMLite needs a no-arg constructor
     }
-    public OrderBook(String exchangeId, String base, String quote, String side, BigDecimal price, BigDecimal volume,
+
+    public OrderBook(String exchangeId, String side, String base, String quote, BigDecimal price, BigDecimal volume,
                      Integer sort, Date modified) {
         this.exchangeId = exchangeId;
         this.base = base;

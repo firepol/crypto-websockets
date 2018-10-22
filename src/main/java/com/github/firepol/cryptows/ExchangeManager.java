@@ -1,3 +1,5 @@
+package com.github.firepol.cryptows;
+
 import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.dao.DaoManager;
 import com.j256.ormlite.jdbc.JdbcConnectionSource;
@@ -22,9 +24,17 @@ import java.util.concurrent.CountDownLatch;
 public class ExchangeManager {
     private final static Logger LOG = LoggerFactory.getLogger(ExchangeManager.class);
 
-    private final static String DATABASE_URL = "jdbc:sqlite:cryptows.db";
+    private static String DATABASE_URL = "jdbc:sqlite:cryptows.db";
 
     public Dao<OrderBook, Integer> orderBookDao;
+
+    public ExchangeManager(String dbPath) {
+        if (!dbPath.startsWith("jdbc")) {
+            DATABASE_URL = String.format("jdbc:sqlite:%s", dbPath);
+        } else {
+            DATABASE_URL = dbPath;
+        }
+    }
 
     public void processWebsockets(HashMap<String, PairsCollection> pairsByExchange) throws Exception {
         ConnectionSource connectionSource = new JdbcConnectionSource(DATABASE_URL);
@@ -67,17 +77,25 @@ public class ExchangeManager {
                 });
     }
 
+    private Disposable subscribeTrades(StreamingExchange exchange, CurrencyPair pair) {
+        return exchange.getStreamingMarketDataService()
+                .getTrades(pair)
+                .subscribe(trade -> {
+                    LOG.info(trade.toString());
+                });
+    }
+
     private void handleOrderBook(String exchangeName, org.knowm.xchange.dto.marketdata.OrderBook orderBook) throws java.sql.SQLException {
         for(int i=0; i<3; i++) {
             Date timestamp = orderBook.getTimeStamp();
-            handleOrderBookPosition(exchangeName, "ask", orderBook.getAsks().get(i), timestamp, i + 1);
-            handleOrderBookPosition(exchangeName, "bid", orderBook.getBids().get(i), timestamp, i + 1);
+            handleOrderBookOrder(exchangeName, orderBook.getAsks().get(i), "ask", i + 1, timestamp);
+            handleOrderBookOrder(exchangeName, orderBook.getBids().get(i), "bid", i + 1, timestamp);
         }
     }
 
-    private void handleOrderBookPosition(String exchangeName, String side, LimitOrder order, Date date, int sort) throws java.sql.SQLException {
+    private void handleOrderBookOrder(String exchangeName, LimitOrder order, String side, int sort, Date date) throws java.sql.SQLException {
         OrderBook dbOrder = getDbOrder(exchangeName, side, order.getCurrencyPair(), sort);
-        createOrUpdateOrder(dbOrder, order, exchangeName, side, date, sort);
+        createOrUpdateOrder(dbOrder, order, exchangeName, side, sort, date);
     }
 
     private OrderBook getDbOrder(String exchangeName, String side, CurrencyPair pair, int sort) throws java.sql.SQLException {
@@ -101,10 +119,10 @@ public class ExchangeManager {
         return result;
     }
 
-    private void createOrUpdateOrder(OrderBook dbOrder, LimitOrder order, String exchangeName, String side, Date date, int sort) throws java.sql.SQLException {
+    private void createOrUpdateOrder(OrderBook dbOrder, LimitOrder order, String exchangeName, String side, int sort, Date date) throws java.sql.SQLException {
         CurrencyPair pair = order.getCurrencyPair();
         if (dbOrder == null) {
-            dbOrder = new OrderBook(exchangeName, pair.base.toString(), pair.counter.toString(), side,
+            dbOrder = new OrderBook(exchangeName, side, pair.base.toString(), pair.counter.toString(),
                     order.getLimitPrice(), order.getOriginalAmount(), sort, date);
         } else {
             dbOrder.price = order.getLimitPrice();
@@ -112,14 +130,6 @@ public class ExchangeManager {
             dbOrder.modified = date;
         }
         orderBookDao.createOrUpdate(dbOrder);
-    }
-
-    public Disposable subscribeTrades(StreamingExchange exchange, CurrencyPair pair) {
-        return exchange.getStreamingMarketDataService()
-                .getTrades(pair)
-                .subscribe(trade -> {
-                    LOG.info(trade.toString());
-                });
     }
 
     private void setupDatabase(ConnectionSource connectionSource) throws Exception {

@@ -6,9 +6,9 @@ Subscribe to crypto exchanges websockets. A project based on [xchange-stream](ht
 
 Create a `data` folder and place files in it, a file per exchange, each file should be named by the exchange, lowercase, e.g.:
 
-- bitfinex
-- bitstamp
-- binance
+- bitfinex.txt
+- bitstamp.txt
+- binance.txt
 
 Inside each file, add the pairs of your interest, comma separated as follows: `base,quote`.
 
@@ -32,7 +32,16 @@ For the pair BTC/USD, BTC is the base, which is the cryptocurrency you are buyin
 
 `cryptows` is a command line application and it expects as first parameter the folder containing the pairs, as explained above. If you omit it, `data` will be used by default.
 
+```
+cd bin
+# See help:
+java -jar cryptows.jar -h
+# Run with defaults:
+java -jar cryptows.jar
+```
+
 ## Resources
 
 [ORMLite JDBC examples](http://ormlite.com/javadoc/ormlite-core/doc-files/ormlite_7.html#Examples)
 [Example ORMLite: SimpleMain](https://github.com/j256/ormlite-jdbc/blob/master/src/test/java/com/j256/ormlite/examples/simple/SimpleMain.java)
+[How to build a jar properly](https://stackoverflow.com/questions/1082580/how-to-build-jars-from-intellij-properly#answer-45303637)

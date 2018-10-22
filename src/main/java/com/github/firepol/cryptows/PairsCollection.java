@@ -1,3 +1,5 @@
+package com.github.firepol.cryptows;
+
 import org.knowm.xchange.currency.CurrencyPair;
 
 import java.io.File;
