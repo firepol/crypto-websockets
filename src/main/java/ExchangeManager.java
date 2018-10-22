@@ -1,7 +1,6 @@
 import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.dao.DaoManager;
 import com.j256.ormlite.jdbc.JdbcConnectionSource;
-import com.j256.ormlite.stmt.ColumnArg;
 import com.j256.ormlite.stmt.QueryBuilder;
 import com.j256.ormlite.support.ConnectionSource;
 import com.j256.ormlite.table.TableUtils;
@@ -64,43 +63,53 @@ public class ExchangeManager {
                 .getOrderBook(pair)
                 .subscribe(orderBook -> {
                     LOG.info(orderBook.toString());
-                    for(int i=0; i<3; i++) {
-                        LimitOrder ask = orderBook.getAsks().get(i);
-                        CurrencyPair askPair = ask.getCurrencyPair();
-                        int sort = i + 1;
-
-                        QueryBuilder<OrderBook, Integer> queryBuilder = orderBookDao.queryBuilder();
-                        queryBuilder.where().eq(OrderBook.EXCHANGE_ID_FIELD_NAME, exchangeName)
-                                .and()
-                                .eq(OrderBook.BASE_FIELD_NAME, askPair.base.toString())
-                                .and()
-                                .eq(OrderBook.QUOTE_FIELD_NAME, askPair.counter.toString())
-                                .and()
-                                .eq(OrderBook.SORT_FIELD_NAME, sort)
-                                .and()
-                                .eq(OrderBook.SIDE_FIELD_NAME, "ask");
-
-                        List<OrderBook> dbAsks = queryBuilder.query();
-                        OrderBook dbAsk = null;
-                        if (dbAsks.size() > 0) {
-                            dbAsk = dbAsks.get(0);
-                        }
-                        saveOrder(exchangeName, "ask", orderBook.getTimeStamp(), sort, ask, dbAsk);
-                    }
+                    handleOrderBook(exchangeName, orderBook);
                 });
     }
 
-    // TODO: pass null or the dbOrder, not a list...
-    private void saveOrder(String exchangeName, String side, Date timestamp, int sort,
-                           LimitOrder order, OrderBook dbOrder) throws java.sql.SQLException {
+    private void handleOrderBook(String exchangeName, org.knowm.xchange.dto.marketdata.OrderBook orderBook) throws java.sql.SQLException {
+        for(int i=0; i<3; i++) {
+            Date timestamp = orderBook.getTimeStamp();
+            handleOrderBookPosition(exchangeName, "ask", orderBook.getAsks().get(i), timestamp, i + 1);
+            handleOrderBookPosition(exchangeName, "bid", orderBook.getBids().get(i), timestamp, i + 1);
+        }
+    }
+
+    private void handleOrderBookPosition(String exchangeName, String side, LimitOrder order, Date date, int sort) throws java.sql.SQLException {
+        OrderBook dbOrder = getDbOrder(exchangeName, side, order.getCurrencyPair(), sort);
+        createOrUpdateOrder(dbOrder, order, exchangeName, side, date, sort);
+    }
+
+    private OrderBook getDbOrder(String exchangeName, String side, CurrencyPair pair, int sort) throws java.sql.SQLException {
+        OrderBook result = null;
+        QueryBuilder<OrderBook, Integer> queryBuilder = orderBookDao.queryBuilder();
+        queryBuilder.where()
+                .eq(OrderBook.EXCHANGE_ID_FIELD_NAME, exchangeName)
+                .and()
+                .eq(OrderBook.BASE_FIELD_NAME, pair.base.toString())
+                .and()
+                .eq(OrderBook.QUOTE_FIELD_NAME, pair.counter.toString())
+                .and()
+                .eq(OrderBook.SORT_FIELD_NAME, sort)
+                .and()
+                .eq(OrderBook.SIDE_FIELD_NAME, side);
+
+        List<OrderBook> dbOrderBooks = queryBuilder.query();
+        if (dbOrderBooks.size() > 0) {
+            result = dbOrderBooks.get(0);
+        }
+        return result;
+    }
+
+    private void createOrUpdateOrder(OrderBook dbOrder, LimitOrder order, String exchangeName, String side, Date date, int sort) throws java.sql.SQLException {
         CurrencyPair pair = order.getCurrencyPair();
         if (dbOrder == null) {
             dbOrder = new OrderBook(exchangeName, pair.base.toString(), pair.counter.toString(), side,
-                    order.getLimitPrice(), order.getOriginalAmount(), sort, timestamp);
+                    order.getLimitPrice(), order.getOriginalAmount(), sort, date);
         } else {
             dbOrder.price = order.getLimitPrice();
             dbOrder.volume = order.getOriginalAmount();
-            dbOrder.modified = timestamp;
+            dbOrder.modified = date;
         }
         orderBookDao.createOrUpdate(dbOrder);
     }
@@ -114,11 +123,7 @@ public class ExchangeManager {
     }
 
     private void setupDatabase(ConnectionSource connectionSource) throws Exception {
-
         orderBookDao = DaoManager.createDao(connectionSource, OrderBook.class);
-
-        // if you need to create the table
-        // TODO : create only if not existing
-//        TableUtils.createTable(connectionSource, OrderBook.class);
+        TableUtils.createTableIfNotExists(connectionSource, OrderBook.class);
     }
 }
