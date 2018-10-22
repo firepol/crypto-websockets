@@ -5,10 +5,8 @@ import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
 
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
-import java.util.stream.Stream;
 
 @CommandLine.Command(name = "cryptows", mixinStandardHelpOptions = true, version = "0.1 beta")
 public class Main implements Runnable {
@@ -27,19 +25,19 @@ public class Main implements Runnable {
     public void run() {
         HashMap<String, PairsCollection> exchangePairs = new HashMap<>();
         ExchangeManager manager = new ExchangeManager(dbPath);
-        try (Stream<Path> paths = Files.walk(Paths.get(pairsDir))) {
-            paths.filter(Files::isRegularFile)
-                .forEach(filePath-> {
-                    PairsCollection pairs = new PairsCollection(filePath.toString());
-                    String fileName = filePath.getFileName().toString();
-                    String exchangeName = fileName.split("\\.")[0];
-                    exchangePairs.put(exchangeName, pairs);
-                });
+        try {
+            Files.list(Paths.get(pairsDir))
+                    .filter(Files::isRegularFile)
+                    .forEach(filePath-> {
+                        PairsCollection pairs = new PairsCollection(filePath.toFile());
+                        String fileName = filePath.getFileName().toString();
+                        String exchangeName = fileName.split("\\.")[0];
+                        exchangePairs.put(exchangeName, pairs);
+                    });
             manager.processWebsockets(exchangePairs);
         } catch (Exception e) {
             e.printStackTrace();
         }
-
     }
 
     public static void main(String[] args) {

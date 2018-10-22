@@ -13,9 +13,8 @@ public class PairsCollection {
 
     public List<CurrencyPair> pairs = new ArrayList<>();
 
-    public PairsCollection(String fileName) {
+    public PairsCollection(File file) {
         try {
-            File file = new File(fileName);
             Scanner input = new Scanner(file);
 
             while (input.hasNextLine()) {
