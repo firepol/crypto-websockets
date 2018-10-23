@@ -46,7 +46,7 @@ public class OrderBook {
     @DatabaseField(columnName = SORT_FIELD_NAME, canBeNull = false)
     public Integer sort;
 
-    @DatabaseField(columnName = MODIFIED_FIELD_NAME, canBeNull = false)
+    @DatabaseField(columnName = MODIFIED_FIELD_NAME, dataType = DataType.DATE_STRING, canBeNull = false)
     public Date modified;
 
     public OrderBook() {
