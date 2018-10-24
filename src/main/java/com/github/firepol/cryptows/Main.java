@@ -13,14 +13,14 @@ public class Main implements Runnable {
 
     private final static Logger LOG = LoggerFactory.getLogger(Main.class);
 
-    @CommandLine.Option(names = {"--orders"}, defaultValue = "1",
-            description = "Amount of orders to save in the DB, per pair/side.")
-    private Integer orders;
-
-    @CommandLine.Option(names = {"--dir"}, defaultValue = "./data",
+    @CommandLine.Option(names = {"--dir"}, required = true,
             description = "Directory containing pairs to subscribe to. Each file is the exchange name." +
                     "Content of each file, one pair per line: base,quote e.g. BTC,USD")
     private String pairsDir;
+
+    @CommandLine.Option(names = {"--orders"}, defaultValue = "1",
+            description = "Amount of orders to save in the DB, per pair/side.")
+    private Integer orders;
 
     @CommandLine.Option(names = {"--dbUrl"}, defaultValue = "cryptows.db",
             description = "Path to the database, by default (SQLite): ./cryptows.db")
@@ -38,6 +38,10 @@ public class Main implements Runnable {
         HashMap<String, PairsCollection> exchangePairs = new HashMap<>();
         ExchangeManager manager = new ExchangeManager(orders, dbUrl, dbUsername, dbPassword);
         try {
+            if (!Files.exists(Paths.get(pairsDir))) {
+                LOG.info("The directory you provided does not exist, please double check.");
+                return;
+            }
             Files.list(Paths.get(pairsDir))
                     .filter(Files::isRegularFile)
                     .forEach(filePath-> {
