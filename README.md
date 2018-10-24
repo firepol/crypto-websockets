@@ -40,6 +40,11 @@ java -jar cryptows.jar -h
 java -jar cryptows.jar
 ```
 
+## Database
+
+Simple query to check your order_book table:
+`select * from order_book order by base, quote, exchange_id, side`
+
 ## Resources
 
 [ORMLite JDBC examples](http://ormlite.com/javadoc/ormlite-core/doc-files/ormlite_7.html#Examples)
