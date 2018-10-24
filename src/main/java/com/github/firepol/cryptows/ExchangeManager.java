@@ -2,6 +2,7 @@ package com.github.firepol.cryptows;
 
 import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.dao.DaoManager;
+import com.j256.ormlite.jdbc.DataSourceConnectionSource;
 import com.j256.ormlite.jdbc.JdbcConnectionSource;
 import com.j256.ormlite.stmt.QueryBuilder;
 import com.j256.ormlite.support.ConnectionSource;
@@ -10,12 +11,20 @@ import info.bitrich.xchangestream.core.ProductSubscription;
 import info.bitrich.xchangestream.core.StreamingExchange;
 import info.bitrich.xchangestream.core.StreamingExchangeFactory;
 import io.reactivex.disposables.Disposable;
+import org.apache.commons.dbcp2.ConnectionFactory;
+import org.apache.commons.dbcp2.DriverManagerConnectionFactory;
+import org.apache.commons.dbcp2.PoolableConnectionFactory;
+import org.apache.commons.dbcp2.PoolingDataSource;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.pool2.impl.GenericObjectPool;
 import org.knowm.xchange.currency.CurrencyPair;
 import org.knowm.xchange.dto.trade.LimitOrder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.sql.DataSource;
+import java.io.Closeable;
+import java.sql.SQLException;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -25,24 +34,35 @@ public class ExchangeManager {
     private final static Logger LOG = LoggerFactory.getLogger(ExchangeManager.class);
 
     private static String DATABASE_URL = "jdbc:sqlite:cryptows.db";
+    private static String USERNAME;
+    private static String PASSWORD;
+    private static Integer ORDERS_TO_SAVE;
 
-    public Dao<OrderBook, Integer> orderBookDao;
+    private Dao<OrderBook, Integer> orderBookDao;
 
-    public ExchangeManager(String dbPath) {
-        if (!dbPath.startsWith("jdbc")) {
-            DATABASE_URL = String.format("jdbc:sqlite:%s", dbPath);
+    public ExchangeManager(Integer orders, String dbUrl, String dbUsername, String dbPassword) {
+        ORDERS_TO_SAVE = orders;
+        USERNAME = dbUsername;
+        PASSWORD = dbPassword;
+
+        if (!dbUrl.startsWith("jdbc")) {
+            DATABASE_URL = String.format("jdbc:sqlite:%s", dbUrl);
         } else {
-            DATABASE_URL = dbPath;
+            DATABASE_URL = dbUrl;
         }
     }
 
     public void processWebsockets(HashMap<String, PairsCollection> pairsByExchange) throws Exception {
-        ConnectionSource connectionSource = new JdbcConnectionSource(DATABASE_URL);
+        ConnectionSource connectionSource = GetConnectionSource();
         setupDatabase(connectionSource);
 
         CountDownLatch latch = new CountDownLatch(1);
         pairsByExchange.forEach((exchangeName, pairsCollection)->{
-            if (exchangeName.equals("binance")) {
+            if (!exchangeName.equals("binance")) {
+                StreamingExchange exchange = getStreamingExchange(exchangeName);
+                exchange.connect().blockingAwait();
+                pairsCollection.pairs.forEach(pair->subscribeOrderBook(exchange, pair));
+            } else {
                 pairsCollection.pairs.forEach(pair->{
                     StreamingExchange exchange = getStreamingExchange(exchangeName);
                     ProductSubscription productSubscription = ProductSubscription.create()
@@ -51,14 +71,39 @@ public class ExchangeManager {
                     exchange.connect(productSubscription).blockingAwait();
                     subscribeOrderBook(exchange, pair);
                 });
-            } else {
-                StreamingExchange exchange = getStreamingExchange(exchangeName);
-                exchange.connect().blockingAwait();
-                pairsCollection.pairs.forEach(pair->subscribeOrderBook(exchange, pair));
             }
         });
 
         latch.await();
+
+        closeConnection(connectionSource);
+    }
+
+    private ConnectionSource GetConnectionSource() throws SQLException {
+        if (DATABASE_URL.startsWith("jdbc:sqlite")) {
+            return new JdbcConnectionSource(DATABASE_URL);
+        }
+        return new DataSourceConnectionSource(createDataSource(), DATABASE_URL);
+    }
+
+    private static DataSource createDataSource() {
+        // https://gist.github.com/abyrd/0e942f633939b55c7c09ee398cde6c81
+        // ConnectionFactory can handle null username and password (for local host-based authentication)
+        ConnectionFactory connectionFactory = new DriverManagerConnectionFactory(DATABASE_URL, USERNAME, PASSWORD);
+        PoolableConnectionFactory poolableConnectionFactory = new PoolableConnectionFactory(connectionFactory, null);
+        GenericObjectPool connectionPool = new GenericObjectPool(poolableConnectionFactory);
+        poolableConnectionFactory.setPool(connectionPool);
+        // Disabling auto-commit on the connection factory confuses ORMLite, so we leave it on.
+        // In any case ORMLite will create transactions for batch operations.
+        return new PoolingDataSource(connectionPool);
+    }
+
+    private static void closeConnection(Closeable closeable) {
+        try {
+            if (closeable != null) closeable.close();
+        } catch (Exception ex) {
+            LOG.error("Error closing.");
+        }
     }
 
     private StreamingExchange getStreamingExchange(String exchangeName) {
@@ -72,7 +117,7 @@ public class ExchangeManager {
         return exchange.getStreamingMarketDataService()
                 .getOrderBook(pair)
                 .subscribe(orderBook -> {
-                    LOG.info(orderBook.toString());
+                    LOG.debug(orderBook.toString());
                     handleOrderBook(exchangeName, orderBook);
                 });
     }
@@ -81,12 +126,12 @@ public class ExchangeManager {
         return exchange.getStreamingMarketDataService()
                 .getTrades(pair)
                 .subscribe(trade -> {
-                    LOG.info(trade.toString());
+                    LOG.debug(trade.toString());
                 });
     }
 
     private void handleOrderBook(String exchangeName, org.knowm.xchange.dto.marketdata.OrderBook orderBook) throws java.sql.SQLException {
-        for(int i=0; i<3; i++) {
+        for(int i = 0; i< ORDERS_TO_SAVE; i++) {
             Date timestamp = orderBook.getTimeStamp();
             handleOrderBookOrder(exchangeName, orderBook.getAsks().get(i), "ask", i + 1, timestamp);
             handleOrderBookOrder(exchangeName, orderBook.getBids().get(i), "bid", i + 1, timestamp);
