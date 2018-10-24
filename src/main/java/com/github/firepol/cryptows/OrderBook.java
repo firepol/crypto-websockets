@@ -37,10 +37,10 @@ public class OrderBook {
     @DatabaseField(columnName = QUOTE_FIELD_NAME, canBeNull = false, width = 10)
     public String quote;
 
-    @DatabaseField(columnName = PRICE_FIELD_NAME, dataType = DataType.BIG_DECIMAL, canBeNull = false)
+    @DatabaseField(columnName = PRICE_FIELD_NAME, dataType = DataType.BIG_DECIMAL_NUMERIC, canBeNull = false)
     public BigDecimal price;
 
-    @DatabaseField(columnName = VOLUME_FIELD_NAME, dataType = DataType.BIG_DECIMAL, canBeNull = false)
+    @DatabaseField(columnName = VOLUME_FIELD_NAME, dataType = DataType.BIG_DECIMAL_NUMERIC, canBeNull = false)
     public BigDecimal volume;
 
     @DatabaseField(columnName = SORT_FIELD_NAME, canBeNull = false)
