@@ -179,6 +179,13 @@ public class ExchangeManager {
 
     private void setupDatabase(ConnectionSource connectionSource) throws Exception {
         orderBookDao = DaoManager.createDao(connectionSource, OrderBook.class);
-        TableUtils.createTableIfNotExists(connectionSource, OrderBook.class);
+        try {
+            TableUtils.createTableIfNotExists(connectionSource, OrderBook.class);
+        } catch (SQLException e) {
+            // The create sequence is a known error on postgres and can be ignored
+            if (!e.getMessage().startsWith("SQL statement failed: CREATE SEQUENCE")) {
+                throw e;
+            }
+        }
     }
 }
