@@ -25,9 +25,7 @@ import org.slf4j.LoggerFactory;
 import javax.sql.DataSource;
 import java.io.Closeable;
 import java.sql.SQLException;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.CountDownLatch;
 
 public class ExchangeManager {
@@ -37,6 +35,8 @@ public class ExchangeManager {
     private static String USERNAME;
     private static String PASSWORD;
     private static Integer ORDERS_TO_SAVE;
+    // The following exchanges need a product registration, see processWebsockets method
+    private static String[] NEED_PRODUCT_REGISTRATION = new String[]{"GDAX", "binance"};
 
     private Dao<OrderBook, Integer> orderBookDao;
 
@@ -58,11 +58,7 @@ public class ExchangeManager {
 
         CountDownLatch latch = new CountDownLatch(1);
         pairsByExchange.forEach((exchangeName, pairsCollection)->{
-            if (!exchangeName.equals("binance")) {
-                StreamingExchange exchange = getStreamingExchange(exchangeName);
-                exchange.connect().blockingAwait();
-                pairsCollection.pairs.forEach(pair->subscribeOrderBook(exchange, pair));
-            } else {
+            if (Arrays.asList(NEED_PRODUCT_REGISTRATION).contains(exchangeName)) {
                 pairsCollection.pairs.forEach(pair->{
                     StreamingExchange exchange = getStreamingExchange(exchangeName);
                     ProductSubscription productSubscription = ProductSubscription.create()
@@ -71,6 +67,10 @@ public class ExchangeManager {
                     exchange.connect(productSubscription).blockingAwait();
                     subscribeOrderBook(exchange, pair);
                 });
+            } else {
+                StreamingExchange exchange = getStreamingExchange(exchangeName);
+                exchange.connect().blockingAwait();
+                pairsCollection.pairs.forEach(pair->subscribeOrderBook(exchange, pair));
             }
         });
 
@@ -108,7 +108,7 @@ public class ExchangeManager {
 
     private StreamingExchange getStreamingExchange(String exchangeName) {
         String className = String.format("info.bitrich.xchangestream.%s.%sStreamingExchange",
-                exchangeName, StringUtils.capitalize(exchangeName));
+                exchangeName.toLowerCase(), StringUtils.capitalize(exchangeName));
         return StreamingExchangeFactory.INSTANCE.createExchange(className);
     }
 
@@ -132,7 +132,7 @@ public class ExchangeManager {
 
     private void handleOrderBook(String exchangeName, org.knowm.xchange.dto.marketdata.OrderBook orderBook) throws java.sql.SQLException {
         for(int i = 0; i< ORDERS_TO_SAVE; i++) {
-            Date timestamp = orderBook.getTimeStamp();
+            Date timestamp = orderBook.getTimeStamp() != null ? orderBook.getTimeStamp() : new Date();
             handleOrderBookOrder(exchangeName, orderBook.getAsks().get(i), "ask", i + 1, timestamp);
             handleOrderBookOrder(exchangeName, orderBook.getBids().get(i), "bid", i + 1, timestamp);
         }
