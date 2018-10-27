@@ -14,9 +14,9 @@
     <orderEntry type="library" name="Maven: info.bitrich.xchange-stream:service-core:4.3.3-SNAPSHOT" level="project" />
     <orderEntry type="library" name="Maven: info.bitrich.xchange-stream:service-netty:4.3.3-SNAPSHOT" level="project" />
     <orderEntry type="library" name="Maven: io.netty:netty-all:4.1.21.Final" level="project" />
-    <orderEntry type="library" name="Maven: com.fasterxml.jackson.core:jackson-databind:2.8.6" level="project" />
-    <orderEntry type="library" name="Maven: com.fasterxml.jackson.core:jackson-annotations:2.8.0" level="project" />
-    <orderEntry type="library" name="Maven: com.fasterxml.jackson.core:jackson-core:2.8.6" level="project" />
+    <orderEntry type="library" name="Maven: com.fasterxml.jackson.core:jackson-databind:2.9.5" level="project" />
+    <orderEntry type="library" name="Maven: com.fasterxml.jackson.core:jackson-annotations:2.9.0" level="project" />
+    <orderEntry type="library" name="Maven: com.fasterxml.jackson.core:jackson-core:2.9.5" level="project" />
     <orderEntry type="library" name="Maven: org.knowm.xchange:xchange-core:4.3.11" level="project" />
     <orderEntry type="library" name="Maven: com.github.mmazi:rescu:2.0.2" level="project" />
     <orderEntry type="library" name="Maven: javax.ws.rs:javax.ws.rs-api:2.1" level="project" />
@@ -31,7 +31,7 @@
     <orderEntry type="library" name="Maven: org.knowm.xchange:xchange-cexio:4.3.11" level="project" />
     <orderEntry type="library" name="Maven: info.bitrich.xchange-stream:xchange-bitstamp:4.3.3-SNAPSHOT" level="project" />
     <orderEntry type="library" name="Maven: info.bitrich.xchange-stream:service-pusher:4.3.3-SNAPSHOT" level="project" />
-    <orderEntry type="library" name="Maven: com.pusher:pusher-java-client:1.4.0" level="project" />
+    <orderEntry type="library" name="Maven: com.pusher:pusher-java-client:1.8.0" level="project" />
     <orderEntry type="library" name="Maven: com.google.code.gson:gson:2.2.2" level="project" />
     <orderEntry type="library" name="Maven: com.pusher:java-websocket:1.4.1" level="project" />
     <orderEntry type="library" name="Maven: org.knowm.xchange:xchange-bitstamp:4.3.11" level="project" />

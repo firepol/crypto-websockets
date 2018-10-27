@@ -8,13 +8,13 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.HashMap;
 
-@CommandLine.Command(name = "cryptows", mixinStandardHelpOptions = true, version = "0.2 beta")
+@CommandLine.Command(name = "cryptows", mixinStandardHelpOptions = true, version = "0.3")
 public class Main implements Runnable {
 
     private final static Logger LOG = LoggerFactory.getLogger(Main.class);
 
     @CommandLine.Option(names = {"--dir"}, required = true,
-            description = "Directory containing pairs to subscribe to. Each file is the exchange name." +
+            description = "Directory containing pairs to subscribe to. Each file is the exchange name. " +
                     "Content of each file, one pair per line: base,quote e.g. BTC,USD")
     private String pairsDir;
 
@@ -23,7 +23,8 @@ public class Main implements Runnable {
     private Integer orders;
 
     @CommandLine.Option(names = {"--dbUrl"}, defaultValue = "cryptows.db",
-            description = "Path to the database, by default (SQLite): ./cryptows.db")
+            description = "Path to the database, by default: ./cryptows.db (SQLite); " +
+                    "you can also use a jdbc connection string e.g.\njdbc:postgresql://localhost:5432/cryptows")
     private String dbUrl;
 
     @CommandLine.Option(names = {"--dbUsername"},
