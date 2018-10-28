@@ -1,6 +1,6 @@
 # Cryptows
 
-A Java program to subscribe to cryptocurrency exchanges websockets and save order books in real time. A project based on [xchange-stream](https://github.com/bitrich-info/xchange-stream).
+A Java program to subscribe to cryptocurrency exchanges websockets and save order books in real time. A project based on [xchange-stream](https://github.com/bitrich-info/xchange-stream) and using [OrmLite](http://ormlite.com/) for the database persistency.
 
 ## Supported exchanges
 
@@ -18,6 +18,17 @@ To add support to your favorite exchange, you must:
 - Add its dependency in the `pom.xml` file (see how I added the others).
 - Rebuild the project and try it out. If you are lucky it will just work.
 - Some exchanges need a `ProductSubscribtion` to be set before connecting to the websocket. If you get an exception about missing ProductSubscribtion, simply add the name of the exchange in the `ExchangeManager` class, in the `NEED_PRODUCT_REGISTRATION` array. Then rebuild and try again.
+
+## Supported databases
+
+I added the necessary code to make this work with:
+
+- SQLite
+- PostgreSQL
+
+### Add support to other databases
+
+Refer to the [OrmLite documentation](http://ormlite.com/javadoc/ormlite-core/doc-files/ormlite.html) to see examples for other databases and feel free to submit a PR to support your favorite database.
 
 ## Configuration
 
@@ -98,3 +109,13 @@ select * from order_book order by base, quote, exchange_id, side
 ## Contributing
 
 I'm no java expert, so if you find that this program can be optimized, your contributions are very welcome. Just submit a PR and I'll check it out.
+
+### Contributing rules
+
+- Submit a separate PR for each change.
+- A PR can contain several commits, but my favorite PRs contain atomic (single) commits: a single commit is easier to review than many commits.
+- If you plan contributing more changes at the same time, try to separate them. At best create a different branch for each PR, so you are sure that they are independent from each other. Like this they are easier to review and can be merged faster.
+
+## License
+
+[MIT License](LICENSE)
