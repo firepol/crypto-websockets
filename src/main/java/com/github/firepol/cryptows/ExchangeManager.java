@@ -18,6 +18,7 @@ import org.apache.commons.dbcp2.PoolingDataSource;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.pool2.impl.GenericObjectPool;
 import org.knowm.xchange.currency.CurrencyPair;
+import org.knowm.xchange.dto.marketdata.OrderBook;
 import org.knowm.xchange.dto.trade.LimitOrder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,7 +39,7 @@ public class ExchangeManager {
     // The following exchanges need a product registration, see processWebsockets method
     private static String[] NEED_PRODUCT_REGISTRATION = new String[]{"GDAX", "binance"};
 
-    private Dao<OrderBook, Integer> orderBookDao;
+    private Dao<BookOrder, Integer> orderBookDao;
 
     public ExchangeManager(Integer orders, String dbUrl, String dbUsername, String dbPassword) {
         ORDERS_TO_SAVE = orders;
@@ -130,7 +131,7 @@ public class ExchangeManager {
                 });
     }
 
-    private void handleOrderBook(String exchangeName, org.knowm.xchange.dto.marketdata.OrderBook orderBook) throws java.sql.SQLException {
+    private void handleOrderBook(String exchangeName, OrderBook orderBook) throws java.sql.SQLException {
         for(int i = 0; i< ORDERS_TO_SAVE; i++) {
             Date timestamp = orderBook.getTimeStamp() != null ? orderBook.getTimeStamp() : new Date();
             handleOrderBookOrder(exchangeName, orderBook.getAsks().get(i), "ask", i + 1, timestamp);
@@ -139,48 +140,48 @@ public class ExchangeManager {
     }
 
     private void handleOrderBookOrder(String exchangeName, LimitOrder order, String side, int sort, Date date) throws java.sql.SQLException {
-        OrderBook dbOrder = getDbOrder(exchangeName, side, order.getCurrencyPair(), sort);
+        BookOrder dbOrder = getDbOrder(exchangeName, side, order.getCurrencyPair(), sort);
         createOrUpdateOrder(dbOrder, order, exchangeName, side, sort, date);
     }
 
-    private OrderBook getDbOrder(String exchangeName, String side, CurrencyPair pair, int sort) throws java.sql.SQLException {
-        OrderBook result = null;
-        QueryBuilder<OrderBook, Integer> queryBuilder = orderBookDao.queryBuilder();
+    private BookOrder getDbOrder(String exchangeName, String side, CurrencyPair pair, int sort) throws java.sql.SQLException {
+        BookOrder result = null;
+        QueryBuilder<BookOrder, Integer> queryBuilder = orderBookDao.queryBuilder();
         queryBuilder.where()
-                .eq(OrderBook.EXCHANGE_ID_FIELD_NAME, exchangeName)
+                .eq(BookOrder.EXCHANGE_NAME_FIELD_NAME, exchangeName)
                 .and()
-                .eq(OrderBook.BASE_FIELD_NAME, pair.base.toString())
+                .eq(BookOrder.BASE_FIELD_NAME, pair.base.toString())
                 .and()
-                .eq(OrderBook.QUOTE_FIELD_NAME, pair.counter.toString())
+                .eq(BookOrder.QUOTE_FIELD_NAME, pair.counter.toString())
                 .and()
-                .eq(OrderBook.SORT_FIELD_NAME, sort)
+                .eq(BookOrder.SORT_FIELD_NAME, sort)
                 .and()
-                .eq(OrderBook.SIDE_FIELD_NAME, side);
+                .eq(BookOrder.SIDE_FIELD_NAME, side);
 
-        List<OrderBook> dbOrderBooks = queryBuilder.query();
+        List<BookOrder> dbOrderBooks = queryBuilder.query();
         if (dbOrderBooks.size() > 0) {
             result = dbOrderBooks.get(0);
         }
         return result;
     }
 
-    private void createOrUpdateOrder(OrderBook dbOrder, LimitOrder order, String exchangeName, String side, int sort, Date date) throws java.sql.SQLException {
+    private void createOrUpdateOrder(BookOrder dbOrder, LimitOrder order, String exchangeName, String side, int sort, Date date) throws java.sql.SQLException {
         CurrencyPair pair = order.getCurrencyPair();
         if (dbOrder == null) {
-            dbOrder = new OrderBook(exchangeName, side, pair.base.toString(), pair.counter.toString(),
+            dbOrder = new BookOrder(exchangeName, side, pair.base.toString(), pair.counter.toString(),
                     order.getLimitPrice(), order.getOriginalAmount(), sort, date);
         } else {
             dbOrder.price = order.getLimitPrice();
             dbOrder.volume = order.getOriginalAmount();
-            dbOrder.modified = date;
+            dbOrder.timestamp = date;
         }
         orderBookDao.createOrUpdate(dbOrder);
     }
 
     private void setupDatabase(ConnectionSource connectionSource) throws Exception {
-        orderBookDao = DaoManager.createDao(connectionSource, OrderBook.class);
+        orderBookDao = DaoManager.createDao(connectionSource, BookOrder.class);
         try {
-            TableUtils.createTableIfNotExists(connectionSource, OrderBook.class);
+            TableUtils.createTableIfNotExists(connectionSource, BookOrder.class);
         } catch (SQLException e) {
             // The create sequence is a known error on postgres and can be ignored
             if (!e.getMessage().startsWith("SQL statement failed: CREATE SEQUENCE")) {
