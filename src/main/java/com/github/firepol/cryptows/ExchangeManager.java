@@ -134,8 +134,8 @@ public class ExchangeManager {
     private void handleOrderBook(String exchangeName, OrderBook orderBook) throws java.sql.SQLException {
         for(int i = 0; i< ORDERS_TO_SAVE; i++) {
             Date timestamp = orderBook.getTimeStamp() != null ? orderBook.getTimeStamp() : new Date();
-            handleOrderBookOrder(exchangeName, orderBook.getAsks().get(i), "ask", i + 1, timestamp);
-            handleOrderBookOrder(exchangeName, orderBook.getBids().get(i), "bid", i + 1, timestamp);
+            handleOrderBookOrder(exchangeName, orderBook.getAsks().get(i), "ask", i, timestamp);
+            handleOrderBookOrder(exchangeName, orderBook.getBids().get(i), "bid", i, timestamp);
         }
     }
 
