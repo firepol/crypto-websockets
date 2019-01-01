@@ -37,7 +37,7 @@ public class ExchangeManager {
     private static String PASSWORD;
     private static Integer ORDERS_TO_SAVE;
     // The following exchanges need a product registration, see processWebsockets method
-    private static String[] NEED_PRODUCT_REGISTRATION = new String[]{"GDAX", "binance"};
+    private static String[] NEED_PRODUCT_REGISTRATION = new String[]{"coinbasepro", "binance"};
 
     private Dao<BookOrder, Integer> orderBookDao;
 
@@ -108,9 +108,11 @@ public class ExchangeManager {
     }
 
     private StreamingExchange getStreamingExchange(String exchangeName) {
-        String className = String.format("info.bitrich.xchangestream.%s.%sStreamingExchange",
-                exchangeName.toLowerCase(), StringUtils.capitalize(exchangeName));
-        return StreamingExchangeFactory.INSTANCE.createExchange(className);
+        String className = StringUtils.capitalize(exchangeName);
+        if (className.equals("Coinbasepro")) className = "CoinbasePro";
+        String fullClassName = String.format("info.bitrich.xchangestream.%s.%sStreamingExchange",
+                exchangeName.toLowerCase(), className);
+        return StreamingExchangeFactory.INSTANCE.createExchange(fullClassName);
     }
 
     private Disposable subscribeOrderBook(StreamingExchange exchange, CurrencyPair pair) {
