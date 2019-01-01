@@ -17,10 +17,10 @@ public class BookOrder {
     public static final String PRICE_FIELD_NAME = "price";
     public static final String VOLUME_FIELD_NAME = "volume";
     public static final String SORT_FIELD_NAME = "sort";
-    public static final String TIMESTAMP_FIELD_NAME = "timestamp";
+    public static final String DATETIME_FIELD_NAME = "datetime";
 
     // TODO : verify why the DB is not created correctly... compared to python's sqlalchemy:
-    // `width` is ignored, bigdecimal as varchar, date as timestamp...
+    // `width` is ignored, bigdecimal as varchar, date as datetime...
 
     @DatabaseField(generatedId = true)
     public Long id;
@@ -46,15 +46,15 @@ public class BookOrder {
     @DatabaseField(columnName = SORT_FIELD_NAME, canBeNull = false)
     public Integer sort;
 
-    @DatabaseField(columnName = TIMESTAMP_FIELD_NAME, dataType = DataType.DATE_STRING, canBeNull = false)
-    public Date timestamp;
+    @DatabaseField(columnName = DATETIME_FIELD_NAME, dataType = DataType.DATE_STRING, canBeNull = false)
+    public Date datetime;
 
     public BookOrder() {
         // ORMLite needs a no-arg constructor
     }
 
     public BookOrder(String exchangeName, String side, String base, String quote, BigDecimal price, BigDecimal volume,
-                     Integer sort, Date timestamp) {
+                     Integer sort, Date datetime) {
         this.exchangeName = exchangeName;
         this.base = base;
         this.quote = quote;
@@ -62,6 +62,6 @@ public class BookOrder {
         this.price = price;
         this.volume = volume;
         this.sort = sort;
-        this.timestamp = timestamp;
+        this.datetime = datetime;
     }
 }

@@ -173,7 +173,7 @@ public class ExchangeManager {
         } else {
             dbOrder.price = order.getLimitPrice();
             dbOrder.volume = order.getOriginalAmount();
-            dbOrder.timestamp = date;
+            dbOrder.datetime = date;
         }
         orderBookDao.createOrUpdate(dbOrder);
     }
