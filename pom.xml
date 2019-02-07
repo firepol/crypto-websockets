@@ -26,37 +26,37 @@
         <dependency>
             <groupId>info.bitrich.xchange-stream</groupId>
             <artifactId>xchange-stream-core</artifactId>
-            <version>4.3.13-SNAPSHOT</version>
-        </dependency>
-
-        <dependency>
-            <groupId>info.bitrich.xchange-stream</groupId>
-            <artifactId>xchange-cexio</artifactId>
-            <version>4.3.13-SNAPSHOT</version>
-        </dependency>
-
-        <dependency>
-            <groupId>info.bitrich.xchange-stream</groupId>
-            <artifactId>xchange-bitstamp</artifactId>
-            <version>4.3.13-SNAPSHOT</version>
-        </dependency>
-
-        <dependency>
-            <groupId>info.bitrich.xchange-stream</groupId>
-            <artifactId>xchange-bitfinex</artifactId>
-            <version>4.3.13-SNAPSHOT</version>
-        </dependency>
-
-        <dependency>
-            <groupId>info.bitrich.xchange-stream</groupId>
-            <artifactId>xchange-coinbasepro</artifactId>
-            <version>4.3.13-SNAPSHOT</version>
+            <version>4.3.14-SNAPSHOT</version>
         </dependency>
 
         <dependency>
             <groupId>info.bitrich.xchange-stream</groupId>
             <artifactId>xchange-binance</artifactId>
-            <version>4.3.13-SNAPSHOT</version>
+            <version>4.3.14-SNAPSHOT</version>
+        </dependency>
+
+        <dependency>
+            <groupId>info.bitrich.xchange-stream</groupId>
+            <artifactId>xchange-bitfinex</artifactId>
+            <version>4.3.14-SNAPSHOT</version>
+        </dependency>
+
+        <dependency>
+            <groupId>info.bitrich.xchange-stream</groupId>
+            <artifactId>xchange-bitstamp</artifactId>
+            <version>4.3.14-SNAPSHOT</version>
+        </dependency>
+
+        <dependency>
+            <groupId>info.bitrich.xchange-stream</groupId>
+            <artifactId>xchange-coinbasepro</artifactId>
+            <version>4.3.14-SNAPSHOT</version>
+        </dependency>
+
+        <dependency>
+            <groupId>info.bitrich.xchange-stream</groupId>
+            <artifactId>xchange-hitbtc</artifactId>
+            <version>4.3.14-SNAPSHOT</version>
         </dependency>
 
         <dependency>

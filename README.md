@@ -9,7 +9,8 @@ Theoretically all exchanges supported by **xchange-stream** should be supported 
 - binance
 - bitfinex
 - bitstamp
-- GDAX
+- coinbasepro
+- hitbtc
 
 ### Add support to other exchanges
 
@@ -37,7 +38,8 @@ Create a `data` folder and place files in it, a file per exchange, each file sho
 - bitfinex.txt
 - bitstamp.txt
 - binance.txt
-- GDAX.txt (note: GDAX has to be all uppercase)
+- coinbasepro.txt
+- hitbtc.txt
 
 Inside each file, add the pairs of your interest, comma separated as follows: `base,quote`.
 
